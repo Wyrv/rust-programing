@@ -13,6 +13,18 @@ extern crate regex;
 use regex::Regex;
 extern crate reqwest;
 use std::env;
+extern crate serde_json;
+use serde_json::Value as JsonValue;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+
+#[derive(Serialize,Deserialize)]
+struct PersonExample{
+    name: String,
+    age: u8,
+    is_male: bool 
+}
 
 //use error_chain::error_chain; 
 use std::io::Read;
@@ -784,7 +796,7 @@ async fn main() {
 
     //OTHER WAYS
     let api_response = http_get().await;
-    println!("API Response = {:#?}", api_response);
+    println!("API Response (JSON) = {:#?}", api_response);
 
     println!("---------\n");
     println!("### ENUM METHODS");
@@ -812,4 +824,66 @@ async fn main() {
         }
     }
 
+    println!("---------\n");
+    println!("### JSON DECODE");
+    //JSON DECODE
+
+    //String in Json
+    let json_string = r#"
+        {
+            "name": "Viny",
+            "age": 33,
+            "is_male": true,
+            "phones": {
+                "first": 999999999,
+                "second": 333333333
+            },
+            "is_human": true
+        }
+    "#;
+
+    //using simple string (#1)
+    let json = serde_json::from_str(json_string);
+    if json.is_ok(){
+        let valid_json: JsonValue = json.unwrap();
+        println!("(ORI) The name is: {}", valid_json["name"]);
+        println!("(ORI) First Phone: {}", valid_json["phones"]["first"]);
+        println!("(ORI) Second Phone: {}", valid_json["phones"]["second"]);
+        println!("(STR) The name is: {}", valid_json["name"].as_str().unwrap()); //Using unwrap is not recommended
+    }
+    else{
+        println!("Sorry, invalid json :(");
+    }
+
+    println!("\n");
+
+    //using simple string + struct (#2)
+    let json2 = serde_json::from_str(json_string);
+    if json2.is_ok(){
+        let valid_json2: PersonExample = json2.unwrap();
+        println!("(Using Struct) The name is: {}", valid_json2.name);
+        println!("(Using Struct) The age is: {}", valid_json2.age);
+        println!("(Using Struct) Is male?: {}", valid_json2.is_male);
+    }
+    else{
+        println!("Sorry, invalid json :(");
+    }
+
+
+    //Using API response (NOT WORKING YET)
+/*
+    let api_response_str = match api_response {
+        Ok(data) => "Success",
+        Err(e) => &format!("Error: {}", e)[..],
+    };
+    
+    let json_api = serde_json::from_str(api_response_str);
+    if json_api.is_ok(){
+        let valid_json_api: JsonValue = json.unwrap();
+        println!("(API) The name is: {}", valid_json_api["info_conta"]["IDCliente"]);
+    }
+    else{
+        println!("Sorry, invalid json :(");
+    }
+*/
 }
